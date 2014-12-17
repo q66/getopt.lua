@@ -7,6 +7,7 @@
         - arguments that can only be specified once (for now you can check
           that manually by going over array values of opts)
         - i18n support
+        - support for desc callback failures
 
     Copyright (c) 2014 Daniel "q66" Kolesa <quaker66@gmail.com>
 
@@ -235,8 +236,8 @@ end
 
     "optional" refers to whether it is required to specify value of the
     argument. The boolean value "true" means that a value is always needed.
-    The value "false" means that the value can be given, but is optional.
-    The value "nil" means that the value can never be given.
+    The value "false" means that the value can never be given.
+    The value "nil" means that the value is optional.
 
     "help" refers to the description of the parameter in help listing.
     The field "metavar" specifies the string under which the value field
