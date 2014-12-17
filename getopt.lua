@@ -106,6 +106,7 @@ local parse_s = function(opts, optstr, descs, args, parser)
         local argr = desc[3]
         if argr or argr == nil then
             if optstr == "" then
+                optstr = nil
                 if #args == 0 then
                     if argr then
                         error("option -" .. opt .. " requires an argument", 3)
