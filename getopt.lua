@@ -514,7 +514,7 @@ end
 
     The header is printed only when given as part of the parser.
 
-    The "The following optins are supported:" line is only printed when there
+    The "The following options are supported:" line is only printed when there
     are options to print.
 
     Same goes for the footer as for the header.
@@ -538,7 +538,7 @@ end
 M.geometry_parse_cb = function(desc, parser, v)
     local x, y, w, h = v:match("^(%d+):(%d+):(%d+):(%d+)$")
     if not x then
-        error("bad geometry value: " .. v, 0)
+        error("bad geometry value (X:Y:W:H expected): " .. v, 0)
     end
     return x, y, w, h
 end
@@ -547,7 +547,7 @@ end
 M.size_parse_cb = function(desc, parser, v)
     local w, h = v:match("^(%d+)x(%d+)$")
     if not w then
-        error("bad size value: " .. v, 0)
+        error("bad size value (WxH expected): " .. v, 0)
     end
     return w, h
 end
