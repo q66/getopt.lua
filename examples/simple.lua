@@ -37,6 +37,9 @@ local opts, args, parser = getopt.parse {
         },
         { "g", "geometry", true, help = "Specify geometry",
             "x:y:w:h", callback = getopt.geometry_parse_cb
+        },
+        { "s", "silly", true, help = "Silly arg to test arg count limit",
+            count = 3
         }
     },
     -- what happens if we fail

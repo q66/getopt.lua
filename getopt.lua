@@ -4,8 +4,7 @@
     documentation.
 
     TODO:
-        - arguments that can only be specified once (for now you can check
-          that manually by going over array values of opts)
+        - mutually exclusive groups
         - i18n support
 
     Copyright (c) 2014 Daniel "q66" Kolesa <quaker66@gmail.com>
@@ -114,7 +113,7 @@ local is_arg = function(opt, j, descs)
     return false
 end
 
-local parse_l = function(opts, opt, descs, args, parser)
+local parse_l = function(opts, opt, descs, args, parser, argcounts)
     local optval
     local i = opt:find("=")
     if i then
@@ -142,6 +141,17 @@ local parse_l = function(opts, opt, descs, args, parser)
     end
     if not rets or #rets == 0 then rets = { optval } end
     local optn = desc.alias or desc[1] or desc[2]
+    local cnt = desc.count or (desc.list and -1 or 1)
+    local acnt = argcounts[optn]
+    if acnt then
+        if cnt >= 0 and acnt >= cnt then
+            error("option --" .. opt .. " can be specified at most " .. cnt
+                .. " times", 0)
+        end
+        argcounts[optn] = acnt + 1
+    else
+        argcounts[optn] = 1
+    end
     opts[#opts + 1] = { optn, short = desc[1], long = desc[2],
         alias = desc.alias, val = optval, unpack(rets) }
     local optret = #rets > 1 and rets or rets[1]
@@ -160,7 +170,7 @@ local parse_l = function(opts, opt, descs, args, parser)
     end
 end
 
-local parse_s = function(opts, optstr, descs, args, parser)
+local parse_s = function(opts, optstr, descs, args, parser, argcounts)
     while optstr ~= "" do
         local optval
         local opt = optstr:sub(1, 1)
@@ -186,6 +196,17 @@ local parse_s = function(opts, optstr, descs, args, parser)
         end
         if not rets or #rets == 0 then rets = { optval } end
         local optn = desc.alias or desc[1] or desc[2]
+        local cnt = desc.count or (desc.list and -1 or 1)
+        local acnt = argcounts[optn]
+        if acnt then
+            if cnt >= 0 and acnt >= cnt then
+                error("option -" .. opt .. " can be specified at most " .. cnt
+                    .. " times", 0)
+            end
+            argcounts[optn] = acnt + 1
+        else
+            argcounts[optn] = 1
+        end
         opts[#opts + 1] = { optn, short = desc[1], long = desc[2],
             alias = desc.alias, val = optval, unpack(rets) }
         local optret = #rets > 1 and rets or rets[1]
@@ -206,6 +227,7 @@ local parse_s = function(opts, optstr, descs, args, parser)
 end
 
 local getopt_u  = function(parser)
+    local argcounts = {}
     local args  = { unpack(parser.args) }
     local descs = parser.descs
     local opts  = {}
@@ -213,9 +235,9 @@ local getopt_u  = function(parser)
         local v = table.remove(args, 1)
         if v == "--" then break end
         if v:sub(1, 2) == "--" then
-            parse_l(opts, v:sub(3), descs, args, parser)
+            parse_l(opts, v:sub(3), descs, args, parser, argcounts)
         else
-            parse_s(opts, v:sub(2), descs, args, parser)
+            parse_s(opts, v:sub(2), descs, args, parser, argcounts)
         end
     end
     return opts, args
@@ -293,7 +315,7 @@ end
     A description is represented by a table. The table has this layout:
 
     { shortn, longn, optional, help = helpmsg, metavar = metavar,
-      alias = alias, callback = retcb, list = list
+      alias = alias, callback = retcb, list = list, count = max_count
     }
 
     "shortn" refers to the short name. For example if you want your argument
@@ -323,6 +345,10 @@ end
     be appended. When you pass such parameter to your application multiple
     times, the list will contain all the values provided. The mapping opts[n]
     will refer to the list rather than the last value given like without list.
+
+    The field "count" can be used to specify a limit on how many arguments
+    can be provided. Its implicit value is 1, unless a list is provided,
+    in which case it's -1 (which is a value for infinity here).
 
     A description can also be used to specify a category, purely for help
     listing purposes:
