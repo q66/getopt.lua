@@ -39,7 +39,7 @@ local opts, args, parser = getopt.parse {
             "x:y:w:h", callback = getopt.geometry_parse_cb
         },
         { "s", "silly", true, help = "Silly arg to test arg count limit",
-            count = 3
+            max_count = 3
         }
     },
     -- what happens if we fail

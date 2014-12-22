@@ -141,7 +141,7 @@ local parse_l = function(opts, opt, descs, args, parser, argcounts)
     end
     if not rets or #rets == 0 then rets = { optval } end
     local optn = desc.alias or desc[1] or desc[2]
-    local cnt = desc.count or (desc.list and -1 or 1)
+    local cnt = desc.max_count or (desc.list and -1 or 1)
     local acnt = argcounts[optn]
     if acnt then
         if cnt >= 0 and acnt >= cnt then
@@ -196,7 +196,7 @@ local parse_s = function(opts, optstr, descs, args, parser, argcounts)
         end
         if not rets or #rets == 0 then rets = { optval } end
         local optn = desc.alias or desc[1] or desc[2]
-        local cnt = desc.count or (desc.list and -1 or 1)
+        local cnt = desc.max_count or (desc.list and -1 or 1)
         local acnt = argcounts[optn]
         if acnt then
             if cnt >= 0 and acnt >= cnt then
@@ -315,7 +315,7 @@ end
     A description is represented by a table. The table has this layout:
 
     { shortn, longn, optional, help = helpmsg, metavar = metavar,
-      alias = alias, callback = retcb, list = list, count = max_count
+      alias = alias, callback = retcb, list = list, max_count = max_count
     }
 
     "shortn" refers to the short name. For example if you want your argument
@@ -346,7 +346,7 @@ end
     times, the list will contain all the values provided. The mapping opts[n]
     will refer to the list rather than the last value given like without list.
 
-    The field "count" can be used to specify a limit on how many arguments
+    The field "max_count" can be used to specify a limit on how many arguments
     can be provided. Its implicit value is 1, unless a list is provided,
     in which case it's -1 (which is a value for infinity here).
 
