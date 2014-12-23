@@ -113,28 +113,7 @@ local is_arg = function(opt, j, descs)
     return false
 end
 
-local parse_l = function(opts, opt, descs, args, parser, argcounts)
-    local optval
-    local i = opt:find("=")
-    if i then
-        opt, optval = opt:sub(1, i - 1), opt:sub(i + 1)
-    end
-
-    local desc = get_desc(opt, 2, descs)
-    local argr = desc[3]
-    if argr or argr == nil then
-        if not optval then
-            if #args == 0 then
-                if argr then
-                    error("option --" .. opt .. " requires an argument", 0)
-                end
-            elseif argr or not is_arg(args[1], 2, descs) then
-                optval = table.remove(args, 1)
-            end
-        end
-    elseif optval then
-        error("option --" .. opt .. " cannot have an argument", 0)
-    end
+local write_arg = function(desc, j, opts, opt, optval, parser, argcounts)
     local rets
     if desc.callback then
         rets = { desc:callback(parser, optval, opts) }
@@ -145,8 +124,8 @@ local parse_l = function(opts, opt, descs, args, parser, argcounts)
     local acnt = argcounts[optn]
     if acnt then
         if cnt >= 0 and acnt >= cnt then
-            error("option --" .. opt .. " can be specified at most " .. cnt
-                .. " times", 0)
+            error("option " .. prefixes[j] .. opt
+                .. " can be specified at most " .. cnt .. " times", 0)
         end
         argcounts[optn] = acnt + 1
     else
@@ -170,60 +149,51 @@ local parse_l = function(opts, opt, descs, args, parser, argcounts)
     end
 end
 
-local parse_s = function(opts, optstr, descs, args, parser, argcounts)
-    while optstr ~= "" do
-        local optval
-        local opt = optstr:sub(1, 1)
-        optstr = optstr:sub(2)
-        local desc = get_desc(opt, 1, descs)
-        local argr = desc[3]
-        if argr or argr == nil then
-            if optstr == "" then
-                optstr = nil
-                if #args == 0 then
-                    if argr then
-                        error("option -" .. opt .. " requires an argument", 0)
-                    end
-                elseif argr or not is_arg(args[1], 1, descs) then
-                    optstr = table.remove(args, 1)
-                end
-            end
-            optval, optstr = optstr, ""
-        end
-        local rets
-        if desc.callback then
-            rets = { desc:callback(parser, optval, opts) }
-        end
-        if not rets or #rets == 0 then rets = { optval } end
-        local optn = desc.alias or desc[1] or desc[2]
-        local cnt = desc.max_count or (desc.list and -1 or 1)
-        local acnt = argcounts[optn]
-        if acnt then
-            if cnt >= 0 and acnt >= cnt then
-                error("option -" .. opt .. " can be specified at most " .. cnt
-                    .. " times", 0)
-            end
-            argcounts[optn] = acnt + 1
-        else
-            argcounts[optn] = 1
-        end
-        opts[#opts + 1] = { optn, short = desc[1], long = desc[2],
-            alias = desc.alias, val = optval, unpack(rets) }
-        local optret = #rets > 1 and rets or rets[1]
-        if desc.list then
-            desc.list[#desc.list + 1] = optret
-            opts[optn] = desc.list
-        elseif optret ~= nil then
-            opts[optn] = optret
-        else
-            opts[optn] = true
-        end
-        local dopts = desc.opts
-        if    dopts then
-              dopts[#dopts + 1] = opts[#opts]
-              dopts[optn]       = opts[optn ]
-        end
+local parse_l = function(opts, opt, descs, args, parser, argcounts)
+    local optval
+    local i = opt:find("=")
+    if i then
+        opt, optval = opt:sub(1, i - 1), opt:sub(i + 1)
     end
+
+    local desc = get_desc(opt, 2, descs)
+    local argr = desc[3]
+    if argr or argr == nil then
+        if not optval then
+            if #args == 0 then
+                if argr then
+                    error("option --" .. opt .. " requires an argument", 0)
+                end
+            elseif argr or not is_arg(args[1], 2, descs) then
+                optval = table.remove(args, 1)
+            end
+        end
+    elseif optval then
+        error("option --" .. opt .. " cannot have an argument", 0)
+    end
+    write_arg(desc, 2, opts, opt, optval, parser, argcounts)
+end
+
+local parse_s = function(opts, optstr, descs, args, parser, argcounts)
+    local optval
+    local opt = optstr:sub(1, 1)
+    optstr = optstr:sub(2)
+    local desc = get_desc(opt, 1, descs)
+    local argr = desc[3]
+    if argr or argr == nil then
+        if optstr == "" then
+            optstr = nil
+            if #args == 0 then
+                if argr then
+                    error("option -" .. opt .. " requires an argument", 0)
+                end
+            elseif argr or not is_arg(args[1], 1, descs) then
+                optstr = table.remove(args, 1)
+            end
+        end
+        optval = optstr
+    end
+    write_arg(desc, 1, opts, opt, optval, parser, argcounts)
 end
 
 local getopt_u  = function(parser)
