@@ -175,23 +175,25 @@ local parse_l = function(opts, opt, descs, args, parser, argcounts)
 end
 
 local parse_s = function(opts, optstr, descs, args, parser, argcounts)
-    local optval
     local opt = optstr:sub(1, 1)
-    optstr = optstr:sub(2)
+    local optval = optstr:sub(2)
     local desc = get_desc(opt, 1, descs)
     local argr = desc[3]
     if argr or argr == nil then
-        if optstr == "" then
-            optstr = nil
+        if optval == "" then
+            optval = nil
             if #args == 0 then
                 if argr then
                     error("option -" .. opt .. " requires an argument", 0)
                 end
             elseif argr or not is_arg(args[1], 1, descs) then
-                optstr = table.remove(args, 1)
+                optval = table.remove(args, 1)
             end
         end
-        optval = optstr
+    elseif optval ~= "" then
+        error("option -" .. opt .. " cannot have an argument", 0)
+    else
+        optval = nil
     end
     write_arg(desc, 1, opts, opt, optval, parser, argcounts)
 end
