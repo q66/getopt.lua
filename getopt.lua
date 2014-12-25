@@ -32,6 +32,12 @@ local M = {}
 
 local prefixes = { "-", "--" }
 
+local ssub, sfind, sgsub, sformat, smatch = string.sub,  string.find,
+                                            string.gsub, string.format,
+                                            string.match
+
+local slower, supper, srep = string.lower, string.upper, string.rep
+
 local ac_process_name = function(np, nm)
     if not nm or #nm < 2 then
         return
@@ -43,7 +49,7 @@ local ac_process_name = function(np, nm)
         np[nm] = { nm }
     end
     for i = 1, #nm do
-        local pnm = nm:sub(1, i - 1) .. nm:sub(i + 1)
+        local pnm = ssub(nm, 1, i - 1) .. ssub(nm, i + 1)
         local t = np[pnm]
         if not t then
             t = {}
@@ -66,7 +72,7 @@ local get_autocorrect = function(descs, wrong, vi)
     end
 
     for i = 1, #wrong do
-        local nm = wrong:sub(1, i - 1) .. wrong:sub(i + 1)
+        local nm = ssub(wrong, 1, i - 1) .. ssub(wrong, i + 1)
         local inp = np[nm]
         if inp then
             if inp == true then
@@ -151,9 +157,9 @@ end
 
 local parse_l = function(opts, opt, descs, args, parser, argcounts)
     local optval
-    local i = opt:find("=")
+    local i = sfind(opt, "=")
     if i then
-        opt, optval = opt:sub(1, i - 1), opt:sub(i + 1)
+        opt, optval = ssub(opt, 1, i - 1), ssub(opt, i + 1)
     end
 
     local desc = get_desc(opt, 2, descs)
@@ -175,8 +181,8 @@ local parse_l = function(opts, opt, descs, args, parser, argcounts)
 end
 
 local parse_s = function(opts, optstr, descs, args, parser, argcounts)
-    local opt = optstr:sub(1, 1)
-    local optval = optstr:sub(2)
+    local opt = ssub(optstr, 1, 1)
+    local optval = ssub(optstr, 2)
     local desc = get_desc(opt, 1, descs)
     local argr = desc[3]
     if argr or argr == nil then
@@ -203,13 +209,13 @@ local getopt_u  = function(parser)
     local args  = { unpack(parser.args) }
     local descs = parser.descs
     local opts  = {}
-    while #args > 0 and args[1]:sub(1, 1) == "-" and args[1] ~= "-" do
+    while #args > 0 and ssub(args[1], 1, 1) == "-" and args[1] ~= "-" do
         local v = table.remove(args, 1)
         if v == "--" then break end
-        if v:sub(1, 2) == "--" then
-            parse_l(opts, v:sub(3), descs, args, parser, argcounts)
+        if ssub(v, 1, 2) == "--" then
+            parse_l(opts, ssub(v, 3), descs, args, parser, argcounts)
         else
-            parse_s(opts, v:sub(2), descs, args, parser, argcounts)
+            parse_s(opts, ssub(v, 2), descs, args, parser, argcounts)
         end
     end
     return opts, args
@@ -347,7 +353,7 @@ end
 local parse = M.parse
 
 local repl_prog = function(str, progn)
-    return (str:gsub("%f[%%]%%prog", progn):gsub("%%%%prog", "%%prog"))
+    return (sgsub(sgsub(str, "%f[%%]%%prog", progn), "%%%%prog", "%%prog"))
 end
 
 local buf_write = function(self, ...)
@@ -358,7 +364,7 @@ end
 local get_metavar = function(desc)
     local mv = desc.metavar
     if not mv and (desc[3] or desc[3] == nil) then
-        mv = desc[2] and desc[2]:upper() or "VAL"
+        mv = desc[2] and supper(desc[2]) or "VAL"
     elseif desc[3] == false then
         mv = nil
     end
@@ -371,7 +377,7 @@ local help = function(parser, f, category)
     if usage then
         usage = repl_prog(usage, progn)
     else
-        usage = ("Usage: %s [OPTIONS]"):format(progn)
+        usage = sformat("Usage: %s [OPTIONS]", progn)
     end
     local buf = { write = buf_write }
     buf:write(usage, "\n")
@@ -416,12 +422,12 @@ local help = function(parser, f, category)
                     local sdf = lls - sln
                     if desc[2] then ln[#ln + 1] = ", " end
                     if sdf > 0 then
-                        ln[#ln + 1] = (" "):rep(sdf)
+                        ln[#ln + 1] = srep(" ", sdf)
                     end
                 elseif not desc[2] and mv then
                     ln[#ln + 1] = mv
                 else
-                    ln[#ln + 1] = (" "):rep(lls + 2)
+                    ln[#ln + 1] = srep(" ", lls + 2)
                 end
                 if desc[2] then
                     ln[#ln + 1] = "--" .. desc[2]
@@ -432,10 +438,10 @@ local help = function(parser, f, category)
                 lln = math.max(lln, #ln)
                 lns[#lns + 1] = { ln, desc.help }
             elseif nign and desc.category then
-                local lcat  = category   and   category:lower() or nil
-                local alias = desc.alias and desc.alias:lower() or nil
+                local lcat  = category   and   slower(category) or nil
+                local alias = desc.alias and slower(desc.alias) or nil
                 iscat = (not category) or (alias                 == lcat)
-                                       or (desc.category:lower() == lcat)
+                                       or (slower(desc.category) == lcat)
                 if iscat then
                     wascat = true
                     lns[#lns + 1] = { false, desc.category }
@@ -534,7 +540,7 @@ end
 
 -- A utility callback for geometry parsing (--foo=x:y:w:h).
 M.geometry_parse_cb = function(desc, parser, v)
-    local x, y, w, h = v:match("^(%d+):(%d+):(%d+):(%d+)$")
+    local x, y, w, h = smatch(v, "^(%d+):(%d+):(%d+):(%d+)$")
     if not x then
         error("bad geometry value (X:Y:W:H expected): " .. v, 0)
     end
@@ -543,7 +549,7 @@ end
 
 -- A utility callback for size parsing (--foo=WxH).
 M.size_parse_cb = function(desc, parser, v)
-    local w, h = v:match("^(%d+)x(%d+)$")
+    local w, h = smatch(v, "^(%d+)x(%d+)$")
     if not w then
         error("bad size value (WxH expected): " .. v, 0)
     end
