@@ -542,6 +542,16 @@ M.help = function(parser, category, f)
     return pcall(help, parser, f or io.stderr, category)
 end
 
+-- A utility callback to parse a number
+-- If a 'base' field is present in the description, uses that.
+M.number_cb = function(desc, parser, v)
+    local n = tonumber(v, desc.base)
+    if not n then
+        error("bad number value: " .. v, 0)
+    end
+    return n
+end
+
 -- A utility callback for geometry parsing (--foo=x:y:w:h).
 M.geometry_parse_cb = function(desc, parser, v)
     local x, y, w, h = smatch(v, "^(%d+):(%d+):(%d+):(%d+)$")
