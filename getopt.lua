@@ -28,6 +28,8 @@
     DEALINGS IN THE SOFTWARE.
 ]]
 
+local arg = _G.arg -- Capture global 'arg'
+
 local M = {}
 
 local prefixes = { "-", "--" }
@@ -208,7 +210,7 @@ end
 
 local getopt_u  = function(parser)
     local argcounts = {}
-    local args  = { unpack(parser.args) }
+    local args  = { unpack(parser.args or arg) }
     local descs = parser.descs
     local opts  = {}
     while #args > 0 and ssub(args[1], 1, 1) == "-" and args[1] ~= "-" do
@@ -375,7 +377,7 @@ end
 
 local help = function(parser, f, category)
     local usage = parser.usage
-    local progn = parser.prog or parser.args[0] or "program"
+    local progn = parser.prog or (parser.args or arg)[0] or "program"
     if usage then
         usage = repl_prog(usage, progn)
     else
