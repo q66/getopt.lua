@@ -38,6 +38,8 @@ local ssub, sfind, sgsub, sformat, smatch = string.sub,  string.find,
 
 local slower, supper, srep = string.lower, string.upper, string.rep
 
+local unpack = table.unpack or unpack
+
 local ac_process_name = function(np, nm)
     if not nm or #nm < 2 then
         return
