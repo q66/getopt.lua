@@ -28,6 +28,8 @@
     DEALINGS IN THE SOFTWARE.
 ]]
 
+local arg = _G.arg -- Capture global 'arg'
+
 local M = {}
 
 local prefixes = { "-", "--" }
@@ -37,6 +39,8 @@ local ssub, sfind, sgsub, sformat, smatch = string.sub,  string.find,
                                             string.match
 
 local slower, supper, srep = string.lower, string.upper, string.rep
+
+local unpack = table.unpack or unpack
 
 local ac_process_name = function(np, nm)
     if not nm or #nm < 2 then
@@ -206,7 +210,7 @@ end
 
 local getopt_u  = function(parser)
     local argcounts = {}
-    local args  = { unpack(parser.args) }
+    local args  = { unpack(parser.args or arg) }
     local descs = parser.descs
     local opts  = {}
     while #args > 0 and ssub(args[1], 1, 1) == "-" and args[1] ~= "-" do
@@ -373,7 +377,7 @@ end
 
 local help = function(parser, f, category)
     local usage = parser.usage
-    local progn = parser.prog or parser.args[0] or "program"
+    local progn = parser.prog or (parser.args or arg)[0] or "program"
     if usage then
         usage = repl_prog(usage, progn)
     else
@@ -538,13 +542,23 @@ M.help = function(parser, category, f)
     return pcall(help, parser, f or io.stderr, category)
 end
 
+-- A utility callback to parse a number
+-- If a 'base' field is present in the description, uses that.
+M.number_cb = function(desc, parser, v)
+    local n = tonumber(v, desc.base)
+    if not n then
+        error("bad number value: " .. v, 0)
+    end
+    return n
+end
+
 -- A utility callback for geometry parsing (--foo=x:y:w:h).
 M.geometry_parse_cb = function(desc, parser, v)
     local x, y, w, h = smatch(v, "^(%d+):(%d+):(%d+):(%d+)$")
     if not x then
         error("bad geometry value (X:Y:W:H expected): " .. v, 0)
     end
-    return x, y, w, h
+    return tonumber(x), tonumber(y), tonumber(w), tonumber(h)
 end
 
 -- A utility callback for size parsing (--foo=WxH).
@@ -553,17 +567,21 @@ M.size_parse_cb = function(desc, parser, v)
     if not w then
         error("bad size value (WxH expected): " .. v, 0)
     end
-    return w, h
+    return tonumber(w), tonumber(h)
 end
 
 -- A utility callback generator for help. Returns a utility callback when
 -- called with file stream as an argument (optional, defaults to stderr).
+-- If the second argument is true, exits the program with successful exit code.
 -- For help args that take a value, the value will be used as a category name.
-M.help_cb = function(fstream)
+M.help_cb = function(fstream, exit)
     return function(desc, parser, v)
         local succ, err = M.help(parser, v, fstream)
         if not succ then
             error(err, 0)
+        end
+        if exit then
+            os.exit(0, true) -- need 0 for lua 5.1
         end
     end
 end
