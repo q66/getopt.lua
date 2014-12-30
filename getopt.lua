@@ -562,12 +562,16 @@ end
 
 -- A utility callback generator for help. Returns a utility callback when
 -- called with file stream as an argument (optional, defaults to stderr).
+-- If the second argument is true, exits the program with successful exit code.
 -- For help args that take a value, the value will be used as a category name.
-M.help_cb = function(fstream)
+M.help_cb = function(fstream, exit)
     return function(desc, parser, v)
         local succ, err = M.help(parser, v, fstream)
         if not succ then
             error(err, 0)
+        end
+        if exit then
+            os.exit(0, true) -- need 0 for lua 5.1
         end
     end
 end
