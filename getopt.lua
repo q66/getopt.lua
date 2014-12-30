@@ -558,7 +558,7 @@ M.geometry_parse_cb = function(desc, parser, v)
     if not x then
         error("bad geometry value (X:Y:W:H expected): " .. v, 0)
     end
-    return x, y, w, h
+    return tonumber(x), tonumber(y), tonumber(w), tonumber(h)
 end
 
 -- A utility callback for size parsing (--foo=WxH).
@@ -567,7 +567,7 @@ M.size_parse_cb = function(desc, parser, v)
     if not w then
         error("bad size value (WxH expected): " .. v, 0)
     end
-    return w, h
+    return tonumber(w), tonumber(h)
 end
 
 -- A utility callback generator for help. Returns a utility callback when
