@@ -7,7 +7,7 @@
         - mutually exclusive groups
         - i18n support
 
-    Copyright (c) 2014 Daniel "q66" Kolesa <quaker66@gmail.com>
+    Copyright (c) 2014 Daniel "q66" Kolesa <daniel@octaforge.org>
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
